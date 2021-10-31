@@ -12,9 +12,9 @@
 #include <Adafruit_SSD1306.h>
 
 //Blynk Setting
-#define BLYNK_TEMPLATE_ID "TMPLR7OrY13R"
-#define BLYNK_DEVICE_NAME "Ying"
-#define BLYNK_AUTH_TOKEN "juzxC71DgR8U2wfAmbu63WYk_dxCVhUG"
+#define BLYNK_TEMPLATE_ID "TMPLq1msm7AF"
+#define BLYNK_DEVICE_NAME "SafetyMeanU Receiver"
+#define BLYNK_AUTH_TOKEN "Pn_5LY8yoSXUUSt_lnbB6odapvRW9VWE"
 
 // Comment this out to disable prints and save space
 #define BLYNK_PRINT Serial
@@ -54,8 +54,6 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 //Data
 String LoRaData;
 String RecieveData[20];
-
-
 
 void setup() { 
   //initialize Serial Monitor
@@ -118,7 +116,7 @@ void readData(){
       LoRaData = LoRa.read();
       Serial.println(LoRaData);
       Serial.println("Send Notification to Blynk");
-      Blynk.notify("Switch Pressed"); // This notification will be sent to Blynk App
+      Blynk.logEvent("car_crash");
       }
     }
 }

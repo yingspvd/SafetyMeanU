@@ -167,13 +167,13 @@ void loop() {
   display.setCursor(0,0);
 
   /*If Crash*/
-//  a.acceleration.y > 30
-//  if(a.acceleration.z > 10){
-//    sendMessage();
-//  }
-//  else{
-//    display.print("Not Crash");
-//  }
+ // a.acceleration.y > 30
+  if(a.acceleration.y > 17){
+    sendMessage();
+  }
+  else{
+    display.print("Not Crash");
+  }
   display.display();
 
 }
@@ -189,7 +189,7 @@ void sendMessage(){
     LoRa.endPacket();
     
     Serial.print("Crash ID: ");
-    Serial.print(ID);
+    Serial.println(ID);
     display.print("Crash");
     delay(5000);
 }
