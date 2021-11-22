@@ -1,5 +1,7 @@
+
 /***********************************
  *  Safety MEA(n) U Project
+ *  Created by Supavadee Phusanam
 ************************************/
 
 //Libraries for LoRa
@@ -30,8 +32,8 @@ Adafruit_MPU6050 mpu;
 #include <BlynkSimpleEsp32.h>
 
 char auth[] = BLYNK_AUTH_TOKEN; // Enter the Auth Token provied by Blynk app
-const char ssid[] = "somboon_5G-pro-2.4G"; // Enter your Wifi name 
-//const char ssid[] = "Ying's iPhone"; // Enter your Wifi name +
+//const char ssid[] = "somboon_5G-pro-2.4G"; // Enter your Wifi name 
+const char ssid[] = "Ying's iPhone"; // Enter your Wifi name +
 const char password[] = "88888888"; // Enter wifi password 
 
 BlynkTimer timer;
@@ -58,14 +60,20 @@ BlynkTimer timer;
 
 /*LoRa send Data*/
 String outgoing;              // outgoing message
-byte ID = 1;            // count of outgoing messages
+byte ID = 4;                  // count of outgoing messages
 byte localAddress = 0xBB;     // address of this device 
 byte destination = 0xFF;      // destination to send to
 
 // MAX value
-double x_max = -10000;
-double y_max = -10000;
-double z_max = -10000;
+double x_max = -100000;
+double y_max = -100000;
+double z_max = -100000;
+
+
+// MIN value
+double x_min = 10000;
+double y_min = 10000;
+double z_min = 10000;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 
@@ -118,7 +126,7 @@ void setup() {
     }
   }
 
- mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
+  mpu.setAccelerometerRange(MPU6050_RANGE_8_G);
   Serial.print("Accelerometer range set to: ");
   
   mpu.setGyroRange(MPU6050_RANGE_500_DEG);
@@ -139,12 +147,13 @@ void loop() {
   mpu.getEvent(&a, &g, &temp);
 
   /*Show acceleration */
-//  Serial.print(a.acceleration.x);
-//  Serial.print(' ');
-//  Serial.print(a.acceleration.y);
-//  Serial.print(' ');
-//  Serial.println(a.acceleration.z);
-  
+  Serial.print(a.acceleration.x);
+  Serial.print(' ');
+  Serial.print(a.acceleration.y);
+  Serial.print(' ');
+  Serial.println(a.acceleration.z);
+
+//  Set Max
   if(a.acceleration.x > x_max){
     x_max = a.acceleration.x;
   }
@@ -154,7 +163,16 @@ void loop() {
   if(a.acceleration.z > z_max){
     z_max = a.acceleration.z;
   }
-
+//  Set Min
+  if(a.acceleration.x < x_min){
+    x_min = a.acceleration.x;
+  }
+  if(a.acceleration.y < y_min){
+    y_min = a.acceleration.y;
+  }
+  if(a.acceleration.z < z_min){
+    z_min = a.acceleration.z;
+  }
   Blynk.virtualWrite(V3,ID);
   Blynk.virtualWrite(V0, a.acceleration.x);
   Blynk.virtualWrite(V1, a.acceleration.y);
@@ -162,13 +180,16 @@ void loop() {
   Blynk.virtualWrite(V4, x_max);
   Blynk.virtualWrite(V5, y_max);
   Blynk.virtualWrite(V6, z_max);
+  Blynk.virtualWrite(V7, x_min);
+  Blynk.virtualWrite(V8, y_min);
+  Blynk.virtualWrite(V9, z_min);  
   
   display.clearDisplay();
   display.setCursor(0,0);
 
   /*If Crash*/
  // a.acceleration.y > 30
-  if(a.acceleration.y > 17){
+  if(a.acceleration.y > 20){
     sendMessage();
   }
   else{
@@ -188,25 +209,36 @@ void sendMessage(){
     LoRa.print(message);            // add payload
     LoRa.endPacket();
     
-    Serial.print("Crash ID: ");
+    Serial.print("Electric Pole ID: ");
     Serial.println(ID);
     display.print("Crash");
     delay(5000);
 }
 
-// This function is called every time the Virtual Pin 0 state changes
-BLYNK_WRITE(V7)
+// This function is called every time the Virtual Pin 10 state changes
+BLYNK_WRITE(V10)
 {
   resetValue();
 }
 
 void resetValue(){
   double default_value = -5000;
+  double min_value = 10000;
+  double max_value = -10000;
+  x_max = max_value;
+  y_max = max_value;
+  z_max = max_value;
+  x_min = min_value;
+  y_min = min_value;
+  z_min = min_value;
   Blynk.virtualWrite(V3,0);
   Blynk.virtualWrite(V0, default_value);
   Blynk.virtualWrite(V1, default_value);
   Blynk.virtualWrite(V2, default_value);
-  Blynk.virtualWrite(V4, default_value);
-  Blynk.virtualWrite(V5, default_value);
-  Blynk.virtualWrite(V6, default_value);
+  Blynk.virtualWrite(V4, max_value);
+  Blynk.virtualWrite(V5, max_value);
+  Blynk.virtualWrite(V6, max_value);
+  Blynk.virtualWrite(V7, min_value);
+  Blynk.virtualWrite(V8, min_value);
+  Blynk.virtualWrite(V9, min_value);
 }

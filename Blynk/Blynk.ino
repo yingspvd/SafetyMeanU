@@ -29,7 +29,7 @@ char auth[] = "MHSnedjRwB3YMs32OSGM3VM6R0BXIFZm";
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = "somboon_5G";
+char ssid[] = "Ying's iPhone";
 char pass[] = "88888888";
 
 BlynkTimer timer;
