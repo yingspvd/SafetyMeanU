@@ -75,6 +75,11 @@ double x_min = 10000;
 double y_min = 10000;
 double z_min = 10000;
 
+double acx = 0;
+double acy = 0;
+double acz = 0;
+double ac = 0;
+double ac_max=0;
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 
 void setup() {
@@ -145,7 +150,7 @@ void loop() {
    /* Get new sensor events with the readings */
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
-
+  
   /*Show acceleration */
 //  Serial.print(a.acceleration.x);
 //  Serial.print(' ');
@@ -153,7 +158,13 @@ void loop() {
 //  Serial.print(' ');
 //  Serial.println(a.acceleration.z);
 
-//  Set Max
+  acx = a.acceleration.x;
+  acy = a.acceleration.y;
+  acz = a.acceleration.z;
+
+  ac = sqrt(pow(acx,2) + pow(acy,2) + pow(acz,2));
+Serial.print(ac);
+////  Set Max
   if(a.acceleration.x > x_max){
     x_max = a.acceleration.x;
   }
@@ -173,6 +184,9 @@ void loop() {
   if(a.acceleration.z < z_min){
     z_min = a.acceleration.z;
   }
+if(ac > ac_max){
+    ac_max = ac;
+  }
   Blynk.virtualWrite(V3,ID);
   Blynk.virtualWrite(V0, a.acceleration.x);
   Blynk.virtualWrite(V1, a.acceleration.y);
@@ -182,7 +196,9 @@ void loop() {
   Blynk.virtualWrite(V6, z_max);
   Blynk.virtualWrite(V7, x_min);
   Blynk.virtualWrite(V8, y_min);
-  Blynk.virtualWrite(V9, z_min);  
+  Blynk.virtualWrite(V9, z_min);
+  Blynk.virtualWrite(V11, ac);
+  Blynk.virtualWrite(V12, ac_max);  
   
   display.clearDisplay();
   display.setCursor(0,0);
@@ -231,6 +247,8 @@ void resetValue(){
   x_min = min_value;
   y_min = min_value;
   z_min = min_value;
+  ac = 0;
+  ac_max = 0;
   Blynk.virtualWrite(V3,0);
   Blynk.virtualWrite(V0, default_value);
   Blynk.virtualWrite(V1, default_value);
@@ -241,4 +259,6 @@ void resetValue(){
   Blynk.virtualWrite(V7, min_value);
   Blynk.virtualWrite(V8, min_value);
   Blynk.virtualWrite(V9, min_value);
+  Blynk.virtualWrite(V11, 0);
+  Blynk.virtualWrite(V12, 0);
 }
