@@ -31,10 +31,11 @@ Adafruit_MPU6050 mpu;
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
 
-char auth[] = BLYNK_AUTH_TOKEN; // Enter the Auth Token provied by Blynk app
+// Config
+char auth[] = BLYNK_AUTH_TOKEN;       // Auth Token provied by Blynk app
 //const char ssid[] = "somboon_5G-pro-2.4G"; // Enter your Wifi name 
-const char ssid[] = "yingspvd"; // Enter your Wifi name +
-const char password[] = "88888888"; // Enter wifi password 
+const char ssid[] = "yingspvd";       //  Wifi name
+const char password[] = "88888888";   //  wifi password 
 
 BlynkTimer timer;
 
@@ -63,17 +64,6 @@ String outgoing;              // outgoing message
 byte ID = 4;                  // count of outgoing messages
 byte localAddress = 0xBB;     // address of this device 
 byte destination = 0xFF;      // destination to send to
-
-// MAX value
-double x_max = -100000;
-double y_max = -100000;
-double z_max = -100000;
-
-
-// MIN value
-double x_min = 10000;
-double y_min = 10000;
-double z_min = 10000;
 
 double acx = 0;
 double acy = 0;
@@ -150,62 +140,28 @@ void loop() {
    /* Get new sensor events with the readings */
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
-  
-  /*Show acceleration */
-//  Serial.print(a.acceleration.x);
-//  Serial.print(' ');
-//  Serial.print(a.acceleration.y);
-//  Serial.print(' ');
-//  Serial.println(a.acceleration.z);
 
   acx = a.acceleration.x;
   acy = a.acceleration.y;
   acz = a.acceleration.z;
 
   ac = sqrt(pow(acx,2) + pow(acy,2) + pow(acz,2));
-Serial.print(ac);
-////  Set Max
-  if(a.acceleration.x > x_max){
-    x_max = a.acceleration.x;
-  }
-  if(a.acceleration.y > y_max){
-    y_max = a.acceleration.y;
-  }
-  if(a.acceleration.z > z_max){
-    z_max = a.acceleration.z;
-  }
-//  Set Min
-  if(a.acceleration.x < x_min){
-    x_min = a.acceleration.x;
-  }
-  if(a.acceleration.y < y_min){
-    y_min = a.acceleration.y;
-  }
-  if(a.acceleration.z < z_min){
-    z_min = a.acceleration.z;
-  }
-if(ac > ac_max){
+  Serial.print("AC: ");
+  Serial.println(ac);
+
+  if(ac > ac_max){
     ac_max = ac;
   }
-  Blynk.virtualWrite(V3,ID);
-  Blynk.virtualWrite(V0, a.acceleration.x);
-  Blynk.virtualWrite(V1, a.acceleration.y);
-  Blynk.virtualWrite(V2, a.acceleration.z);
-  Blynk.virtualWrite(V4, x_max);
-  Blynk.virtualWrite(V5, y_max);
-  Blynk.virtualWrite(V6, z_max);
-  Blynk.virtualWrite(V7, x_min);
-  Blynk.virtualWrite(V8, y_min);
-  Blynk.virtualWrite(V9, z_min);
-  Blynk.virtualWrite(V11, ac);
-  Blynk.virtualWrite(V12, ac_max);  
+  
+  Blynk.virtualWrite(V1,ID);
+  Blynk.virtualWrite(V2, ac);
+  Blynk.virtualWrite(V3, ac_max);  
   
   display.clearDisplay();
   display.setCursor(0,0);
 
   /*If Crash*/
- // a.acceleration.y > 30
-  if(a.acceleration.y > 20){
+  if(ac > 12){
     sendMessage();
   }
   else{
@@ -232,33 +188,14 @@ void sendMessage(){
 }
 
 // This function is called every time the Virtual Pin 10 state changes
-BLYNK_WRITE(V10)
+BLYNK_WRITE(V0)
 {
   resetValue();
 }
 
 void resetValue(){
-  double default_value = -5000;
-  double min_value = 10000;
-  double max_value = -10000;
-  x_max = max_value;
-  y_max = max_value;
-  z_max = max_value;
-  x_min = min_value;
-  y_min = min_value;
-  z_min = min_value;
   ac = 0;
   ac_max = 0;
+  Blynk.virtualWrite(V2,0);
   Blynk.virtualWrite(V3,0);
-  Blynk.virtualWrite(V0, default_value);
-  Blynk.virtualWrite(V1, default_value);
-  Blynk.virtualWrite(V2, default_value);
-  Blynk.virtualWrite(V4, max_value);
-  Blynk.virtualWrite(V5, max_value);
-  Blynk.virtualWrite(V6, max_value);
-  Blynk.virtualWrite(V7, min_value);
-  Blynk.virtualWrite(V8, min_value);
-  Blynk.virtualWrite(V9, min_value);
-  Blynk.virtualWrite(V11, 0);
-  Blynk.virtualWrite(V12, 0);
 }
