@@ -63,7 +63,10 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 
 //Data
 String LoRaData;
-String RecieveData[20];
+String ID;
+String ac;
+String force;
+String level;
 
 void setup() { 
   //initialize Serial Monitor
@@ -129,16 +132,28 @@ void readData(){
     //read packet
     while (LoRa.available()) {
       LoRaData = LoRa.readString();
-      count = count + 1;
       Serial.println(LoRaData);
-      Serial.print("Count ");
-      Serial.println(count);
-      if(count == 7)
-        {
-          Serial.println("Send Notification to Blynk");
-          LINE.notifySticker("CRASH!",1,2);
-        Blynk.logEvent("car_crash","123");
-        }
+
+      int pos1 = LoRaData.indexOf('/');
+      int pos2 = LoRaData.indexOf('&');
+      int pos3 = LoRaData.indexOf('-');
+
+      ID = LoRaData.substring(0, pos1);
+      ac = LoRaData.substring(pos1+1, pos2);
+      force = LoRaData.substring(pos2+1, pos3);
+      level = LoRaData.substring(pos3+1, LoRaData.length());
+
+      String message = "ID: " + ID;
+      Serial.println(ID);   
+      Serial.println(ac);   
+      Serial.println(force); 
+      Serial.println(level); 
+      Blynk.logEvent("level1",message);
+
+      Blynk.virtualWrite(V0,ID);
+      Blynk.virtualWrite(V1,ac);  
+      Blynk.virtualWrite(V2,force);  
+      Blynk.virtualWrite(V3,level);  
       }
     }
 }
@@ -153,4 +168,22 @@ void displayData(){
    display.setCursor(0,30);
    display.print(LoRaData);
    display.display();   
+}
+
+// This function is called every time the Virtual Pin 0 state changes
+BLYNK_WRITE(V4)
+{
+  resetValue();
+}
+
+void resetValue(){
+  ID = "";
+  ac = "";
+  force = "";
+  level = "";
+  Blynk.virtualWrite(V0,0);
+  Blynk.virtualWrite(V1,0);
+  Blynk.virtualWrite(V2,0);
+  Blynk.virtualWrite(V3,0);
+  
 }

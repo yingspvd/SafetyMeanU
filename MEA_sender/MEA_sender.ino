@@ -73,6 +73,7 @@ double ac_max=0;
 double force = 0;
 double force_max = 0;
 double mass = 1670;
+int level = 0;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 
@@ -184,13 +185,16 @@ void loop() {
 }
 
 void sendMessage(){
-    String message = "MEA";         // send a message
+    String message = "";         // send a message
+    level = 1;
+    message = String(ID) + "/" + String(ac_max) + "&" + String(force_max)+ "-" + String(level);
     LoRa.beginPacket();             // start packet
-    LoRa.write(destination);        // add destination address
+    LoRa.print(message);
+    /*LoRa.write(destination);        // add destination address
     LoRa.write(localAddress);       // add sender address
     LoRa.write(ID);                 // ID
     LoRa.write(message.length());   // add payload length
-    LoRa.print(message);            // add payload
+    LoRa.print(message);            // add payload*/
     LoRa.endPacket();
     
     Serial.print("Electric Pole ID: ");
@@ -199,7 +203,7 @@ void sendMessage(){
     delay(5000);
 }
 
-// This function is called every time the Virtual Pin 10 state changes
+// This function is called every time the Virtual Pin 0 state changes
 BLYNK_WRITE(V0)
 {
   resetValue();
