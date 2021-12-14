@@ -2,7 +2,6 @@
 /***********************************
  *  Safety MEA(n) U Project
 ************************************/
-#include <TridentTD_LineNotify.h>
 
 #include <ssl_client.h>
 #include <WiFiClientSecure.h>
@@ -15,7 +14,6 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-
 
 //Blynk Setting
 #define BLYNK_TEMPLATE_ID "TMPLq1msm7AF"
@@ -31,12 +29,15 @@
 #include <BlynkSimpleEsp32.h>
 
 // Blynk token
-char auth[] = BLYNK_AUTH_TOKEN; // Enter the Auth Token provied by Blynk app
+char auth[] = BLYNK_AUTH_TOKEN;     // Auth Token provied by Blynk app
 
 // WIFI
-//const char ssid[] = "somboon_5G-pro-2.4G"; // Enter your Wifi name 
-const char ssid[] = "Ying's iPhone"; // Enter your Wifi name 
-const char password[] = "88888888"; // Enter wifi password 
+const char ssid[] = "yingspvd";     // Wifi name 
+const char password[] = "88888888"; // Wifi password 
+
+//Library for Line Notify
+#include <TridentTD_LineNotify.h>
+#define LINE_TOKEN "NVz2bXWDzMGfDt2JNCz0DipsBnVbv2iGLrz3jHy3AwJ"
 
 //define the pins used by the LoRa transceiver module
 #define SCK 5
@@ -64,17 +65,18 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 String LoRaData;
 String RecieveData[20];
 
-// Line Token
-#define LINE_TOKEN "83ZEDPebQKyeTo2nT5fyjj24AAHYLlwc3VS9KZWwbwa"
-
 void setup() { 
   //initialize Serial Monitor
   Serial.begin(115200);
   Blynk.begin(auth, ssid, password);
-  LINE.setToken(LINE_TOKEN);
+  
   Serial.println(WiFi.localIP());
   Serial.println(LINE.getVersion());
-  LINE.notify("LINE TEST");
+
+  Serial.print("LINE_TOKEN");
+  Serial.println(LINE_TOKEN);
+  LINE.setToken(LINE_TOKEN);
+  callLine();
   
   //reset OLED display via software
   pinMode(OLED_RST, OUTPUT);
@@ -136,7 +138,7 @@ void readData(){
         {
           Serial.println("Send Notification to Blynk");
           LINE.notifySticker("CRASH!",1,2);
-        Blynk.logEvent("car_crash");
+          Blynk.logEvent("car_crash",123);
         }
       }
     }
@@ -152,4 +154,9 @@ void displayData(){
    display.setCursor(0,30);
    display.print(LoRaData);
    display.display();   
+}
+
+void callLine(){
+  Serial.println("CALL LINE");
+  LINE.notify("อุณหภูมิ เกินกำหนด");
 }

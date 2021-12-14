@@ -61,7 +61,7 @@ BlynkTimer timer;
 
 /*LoRa send Data*/
 String outgoing;              // outgoing message
-byte ID = 4;                  // count of outgoing messages
+int ID = 463;                // count of outgoing messages
 byte localAddress = 0xBB;     // address of this device 
 byte destination = 0xFF;      // destination to send to
 
@@ -70,6 +70,10 @@ double acy = 0;
 double acz = 0;
 double ac = 0;
 double ac_max=0;
+double force = 0;
+double force_max = 0;
+double mass = 1670;
+
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 
 void setup() {
@@ -146,16 +150,24 @@ void loop() {
   acz = a.acceleration.z;
 
   ac = sqrt(pow(acx,2) + pow(acy,2) + pow(acz,2));
-  Serial.print("AC: ");
-  Serial.println(ac);
+  force = mass * ac;
+  
+  //Serial.print("AC: ");
+  //Serial.println(ac);
 
   if(ac > ac_max){
     ac_max = ac;
   }
+
+  if(force > force_max){
+    force_max = force;
+  }
   
   Blynk.virtualWrite(V1,ID);
-  Blynk.virtualWrite(V2, ac);
-  Blynk.virtualWrite(V3, ac_max);  
+  Blynk.virtualWrite(V2,ac);
+  Blynk.virtualWrite(V3,ac_max);  
+  Blynk.virtualWrite(V4,force); 
+  Blynk.virtualWrite(V5,force_max); 
   
   display.clearDisplay();
   display.setCursor(0,0);
@@ -196,6 +208,10 @@ BLYNK_WRITE(V0)
 void resetValue(){
   ac = 0;
   ac_max = 0;
+  force = 0;
+  force_max = 0;
   Blynk.virtualWrite(V2,0);
   Blynk.virtualWrite(V3,0);
+  Blynk.virtualWrite(V4,0);
+  Blynk.virtualWrite(V5,0);
 }
