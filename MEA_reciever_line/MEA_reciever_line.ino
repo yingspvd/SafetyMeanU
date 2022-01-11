@@ -1,7 +1,9 @@
 
 /***********************************
  *  Safety MEA(n) U Project
+ *  Created by Supavadee Phusanam
 ************************************/
+#include <TridentTD_LineNotify.h>
 
 #include <ssl_client.h>
 #include <WiFiClientSecure.h>
@@ -32,12 +34,10 @@
 char auth[] = BLYNK_AUTH_TOKEN;     // Auth Token provied by Blynk app
 
 // WIFI
-const char ssid[] = "yingspvd";     // Wifi name 
-const char password[] = "88888888"; // Wifi password 
+const char SSID[] = "yingspvd";     // Wifi name 
+const char PASSWORD[] = "88888888"; // Wifi password 
 
-//Library for Line Notify
-#include <TridentTD_LineNotify.h>
-#define LINE_TOKEN "NVz2bXWDzMGfDt2JNCz0DipsBnVbv2iGLrz3jHy3AwJ"
+#define LINE_TOKEN  "MOjy8EkYl7crAGh3nTAqowl89uhN81gpHov34V1YRo3"
 
 //define the pins used by the LoRa transceiver module
 #define SCK 5
@@ -63,20 +63,29 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 
 //Data
 String LoRaData;
-String RecieveData[20];
+String ID;
+String ac;
+String force;
+String level;
 
 void setup() { 
   //initialize Serial Monitor
   Serial.begin(115200);
-  Blynk.begin(auth, ssid, password);
-  
-  Serial.println(WiFi.localIP());
+  Blynk.begin(auth, SSID, PASSWORD);
   Serial.println(LINE.getVersion());
 
-  Serial.print("LINE_TOKEN");
-  Serial.println(LINE_TOKEN);
+  WiFi.begin(SSID, PASSWORD);
+  Serial.printf("WiFi connecting to %s\n",  SSID);
+  while(WiFi.status() != WL_CONNECTED){ 
+    Serial.print("."); 
+    delay(400); 
+  }
+  Serial.printf("\nWiFi connected\nIP : ");
+  Serial.println(WiFi.localIP());  
+
   LINE.setToken(LINE_TOKEN);
-  callLine();
+  LINE.notifySticker("Let's Start",11538,51626494);
+
   
   //reset OLED display via software
   pinMode(OLED_RST, OUTPUT);
@@ -129,23 +138,39 @@ void readData(){
       
     //read packet
     while (LoRa.available()) {
-      LoRaData = LoRa.read();
-      count = count + 1;
+      LoRaData = LoRa.readString();
       Serial.println(LoRaData);
-      Serial.print("Count ");
-      Serial.println(count);
-      if(count == 7)
-        {
-          Serial.println("Send Notification to Blynk");
-          LINE.notifySticker("CRASH!",1,2);
-          Blynk.logEvent("car_crash",123);
-        }
+
+      int pos1 = LoRaData.indexOf('/');
+      int pos2 = LoRaData.indexOf('&');
+      int pos3 = LoRaData.indexOf('-');
+
+      ID = LoRaData.substring(0, pos1);
+      ac = LoRaData.substring(pos1+1, pos2);
+      force = LoRaData.substring(pos2+1, pos3);
+      level = LoRaData.substring(pos3+1, LoRaData.length());
+
+      String message = "ID: " + ID;
+      String messageLine = "ID: " + ID + " Level" + level;
+      
+      Serial.println(ID);   
+      Serial.println(ac);   
+      Serial.println(force); 
+      Serial.println(level); 
+      Blynk.logEvent("level1",message);
+      LINE.notify(messageLine);
+      
+
+      Blynk.virtualWrite(V0,ID);
+      Blynk.virtualWrite(V1,ac);  
+      Blynk.virtualWrite(V2,force);  
+      Blynk.virtualWrite(V3,level);  
       }
     }
 }
 
 void displayData(){
-  // Dsiplay information
+  // Display information
    display.clearDisplay();
    display.setCursor(0,0);
    display.print("LORA RECEIVER");
@@ -156,7 +181,20 @@ void displayData(){
    display.display();   
 }
 
-void callLine(){
-  Serial.println("CALL LINE");
-  LINE.notify("อุณหภูมิ เกินกำหนด");
+// This function is called every time the Virtual Pin 0 state changes
+BLYNK_WRITE(V4)
+{
+  resetValue();
+}
+
+void resetValue(){
+  ID = "";
+  ac = "";
+  force = "";
+  level = "";
+  Blynk.virtualWrite(V0,0);
+  Blynk.virtualWrite(V1,0);
+  Blynk.virtualWrite(V2,0);
+  Blynk.virtualWrite(V3,0);
+  
 }

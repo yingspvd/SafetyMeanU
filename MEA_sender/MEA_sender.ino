@@ -33,7 +33,6 @@ Adafruit_MPU6050 mpu;
 
 // Config
 char auth[] = BLYNK_AUTH_TOKEN;       // Auth Token provied by Blynk app
-//const char ssid[] = "somboon_5G-pro-2.4G"; // Enter your Wifi name 
 const char ssid[] = "yingspvd";       //  Wifi name
 const char password[] = "88888888";   //  wifi password 
 
@@ -61,7 +60,7 @@ BlynkTimer timer;
 
 /*LoRa send Data*/
 String outgoing;              // outgoing message
-int ID = 463;                // count of outgoing messages
+int ID = 4863;                // count of outgoing messages
 byte localAddress = 0xBB;     // address of this device 
 byte destination = 0xFF;      // destination to send to
 
