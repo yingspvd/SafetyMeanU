@@ -61,8 +61,9 @@ BlynkTimer timer;
 /*LoRa send Data*/
 String outgoing;              // outgoing message
 int ID = 4863;                // count of outgoing messages
-byte localAddress = 0xBB;     // address of this device 
-byte destination = 0xFF;      // destination to send to
+byte msgCount = 0;            // count of outgoing messages
+byte localAddress = 00000002;     // address of this device 
+byte destination = 00000004;      // destination to send to
 
 double acx = 0;
 double acy = 0;
@@ -72,7 +73,6 @@ double ac_max=0;
 double force = 0;
 double force_max = 0;
 double mass = 1670;
-int level = 0;
 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 
@@ -151,9 +151,6 @@ void loop() {
 
   ac = sqrt(pow(acx,2) + pow(acy,2) + pow(acz,2));
   force = mass * ac;
-  
-  Serial.print("AC: ");
-  Serial.println(ac);
 
   if(ac > ac_max){
     ac_max = ac;
@@ -173,33 +170,77 @@ void loop() {
   display.setCursor(0,0);
 
   /*If Crash*/
-  if(ac > 12){
-    sendMessage();
+  if(ac >= 30){
+    sendMessage(3);
+  }
+  else if(ac >= 20 && ac < 30){
+    sendMessage(2);
+  }
+  if(ac >= 13 && ac < 20){
+    sendMessage(1);
   }
   else{
     display.print("Not Crash");
   }
   display.display();
 
+   // parse for a packet, and call onReceive with the result:
+  onReceive(LoRa.parsePacket());
 }
 
-void sendMessage(){
-    String message = "";         // send a message
-    level = 1;
-    message = String(ID) + "/" + String(ac_max) + "&" + String(force_max)+ "-" + String(level);
-    LoRa.beginPacket();             // start packet
-    LoRa.print(message);
-    /*LoRa.write(destination);        // add destination address
-    LoRa.write(localAddress);       // add sender address
-    LoRa.write(ID);                 // ID
-    LoRa.write(message.length());   // add payload length
-    LoRa.print(message);            // add payload*/
-    LoRa.endPacket();
+void sendMessage(int level){
+    String outgoing = "";         // send a message
+    outgoing = String(ID) + "/" + String(ac_max) + "&" + String(force_max)+ "-" + String(level);
+    LoRa.beginPacket();                   // start packet
+    LoRa.write(destination);              // add destination address
+    LoRa.write(localAddress);             // add sender address
+    LoRa.write(msgCount);                 // add message ID
+    LoRa.write(outgoing.length());        // add payload length
+    LoRa.print(outgoing);                 // add payload
+    LoRa.endPacket();                     // finish packet and send it
+    msgCount++;                           // increment message ID
     
     Serial.print("Electric Pole ID: ");
     Serial.println(ID);
     display.print("Crash");
     delay(5000);
+}
+
+void onReceive(int packetSize) {
+  if (packetSize == 0) return;          // if there's no packet, return
+ Serial.print("packetSize");
+  Serial.println(packetSize);
+  // read packet header bytes:
+  int recipient = LoRa.read();          // recipient address
+  byte sender = LoRa.read();            // sender address
+  byte incomingMsgId = LoRa.read();     // incoming msg ID
+  byte incomingLength = LoRa.read();    // incoming msg length
+  String incoming = "";
+
+  while (LoRa.available()) {
+    incoming += (char)LoRa.read();
+  }
+
+  if (incomingLength != incoming.length()) {   // check length for error
+    Serial.println("error: message length does not match length");
+    return;                             // skip rest of function
+  }
+
+  // if the recipient isn't this device or broadcast,
+  if (recipient != localAddress && recipient != 00000002) {
+    Serial.println("This message is not for me.");
+    return;                             // skip rest of function
+  }
+
+  // if message is for this device, or broadcast, print details:
+  Serial.println("Received from: 0x" + String(sender, HEX));
+  Serial.println("Sent to: 0x" + String(recipient, HEX));
+  Serial.println("Message ID: " + String(incomingMsgId));
+  Serial.println("Message length: " + String(incomingLength));
+  Serial.println("Message: " + incoming);
+  Serial.println("RSSI: " + String(LoRa.packetRssi()));
+  Serial.println("Snr: " + String(LoRa.packetSnr()));
+  Serial.println();
 }
 
 // This function is called every time the Virtual Pin 0 state changes

@@ -34,7 +34,7 @@
 char auth[] = BLYNK_AUTH_TOKEN;     // Auth Token provied by Blynk app
 
 // WIFI
-const char SSID[] = "somboon";     // Wifi name 
+const char SSID[] = "yingspvd";     // Wifi name 
 const char PASSWORD[] = "88888888"; // Wifi password 
 
 #define LINE_TOKEN  "ggz1RSjek5Im3FhfEADeloxbyms837PgNyG9oAcQ4Md"
@@ -129,43 +129,63 @@ void loop() {
 }
 
 void readData(){
+  byte localAddress = 00000004;     // address of this device
   int count = 0;
+  
   //try to parse packet
   int packetSize = LoRa.parsePacket();
+  
   if (packetSize) {
     //received a packet
     Serial.print("Received packet ");
-      
+    int recipient = LoRa.read();          // recipient address
+    byte sender = LoRa.read();            // sender address
+    byte incomingMsgId = LoRa.read();     // incoming msg ID
+    byte incomingLength = LoRa.read();    // incoming msg length
+    String incoming = "";
+
     //read packet
     while (LoRa.available()) {
-      LoRaData = LoRa.readString();
-      Serial.println(LoRaData);
+      incoming += (char)LoRa.read();
+    }
 
-      int pos1 = LoRaData.indexOf('/');
-      int pos2 = LoRaData.indexOf('&');
-      int pos3 = LoRaData.indexOf('-');
+    if (incomingLength != incoming.length()) {   // check length for error
+    Serial.println("error: message length does not match length");
+    return;                             // skip rest of function
+    }
 
-      ID = LoRaData.substring(0, pos1);
-      ac = LoRaData.substring(pos1+1, pos2);
-      force = LoRaData.substring(pos2+1, pos3);
-      level = LoRaData.substring(pos3+1, LoRaData.length());
+    // if the recipient isn't this device or broadcast,
+    if (recipient != localAddress && recipient != 00000004) {
+      Serial.println("This message is not for me.");
+      return;                             // skip rest of function
+    }
+    
+    // if message is for this device, or broadcast, print details:
+    int pos1 = incoming.indexOf('/');
+    int pos2 = incoming.indexOf('&');
+    int pos3 = incoming.indexOf('-');
 
-      String message = "ID: " + ID;
-      String messageLine = "ID: " + ID + " Level" + level;
+    ID = incoming.substring(0, pos1);
+    ac = incoming.substring(pos1+1, pos2);
+    force = incoming.substring(pos2+1, pos3);
+    level = incoming.substring(pos3+1, incoming.length());
+
+    String message = "ID: " + ID;
+    String messageLine = "ID: " + ID + " Level" + level;
+    Serial.println("Received from: 0x" + String(sender, HEX));
+    Serial.println("Sent to: 0x" + String(recipient, HEX));
+    Serial.println("ID: " + ID);   
+    Serial.println("Accelration: "+ac);   
+    Serial.println("Force: " + force); 
+    Serial.println("Level: " + level); 
+    Blynk.logEvent("level1"+ message);
+    LINE.notify(messageLine);
+    
+    Blynk.virtualWrite(V0,ID);
+    Blynk.virtualWrite(V1,ac);  
+    Blynk.virtualWrite(V2,force);  
+    Blynk.virtualWrite(V3,level);  
       
-      Serial.println(ID);   
-      Serial.println(ac);   
-      Serial.println(force); 
-      Serial.println(level); 
-      Blynk.logEvent("level1",message);
-      LINE.notify(messageLine);
-      
-
-      Blynk.virtualWrite(V0,ID);
-      Blynk.virtualWrite(V1,ac);  
-      Blynk.virtualWrite(V2,force);  
-      Blynk.virtualWrite(V3,level);  
-      }
     }
 }
 
