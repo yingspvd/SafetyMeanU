@@ -61,6 +61,7 @@ BlynkTimer timer;
 /*LoRa send Data*/
 String outgoing;              // outgoing message
 int ID = 4863;                // count of outgoing messages
+String location = "https://www.google.com/maps?q=%E0%B8%AD%E0%B8%A1%E0%B8%B2%E0%B8%A3%E0%B8%B5+%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%95%E0%B8%B9%E0%B8%99%E0%B9%89%E0%B8%B3&um=1&ie=UTF-8&sa=X&ved=2ahUKEwjO0_Cnrpv2AhUi73MBHVuVB7QQ_AUoAXoECAIQAw";
 byte msgCount = 0;            // count of outgoing messages
 byte localAddress = 00000002;     // address of this device 
 byte destination = 00000004;      // destination to send to
@@ -170,13 +171,10 @@ void loop() {
   display.setCursor(0,0);
 
   /*If Crash*/
-  if(ac >= 30){
-    sendMessage(3);
-  }
-  else if(ac >= 20 && ac < 30){
+  if(ac >= 25){
     sendMessage(2);
   }
-  if(ac >= 13 && ac < 20){
+  else if(ac >= 15 && ac < 25){
     sendMessage(1);
   }
   else{
@@ -190,7 +188,7 @@ void loop() {
 
 void sendMessage(int level){
     String outgoing = "";         // send a message
-    outgoing = String(ID) + "/" + String(ac_max) + "&" + String(force_max)+ "-" + String(level);
+    outgoing = String(ID) + ">" + location + "*" + String(ac_max) + "<" + String(force_max)+ "@" + String(level);
     LoRa.beginPacket();                   // start packet
     LoRa.write(destination);              // add destination address
     LoRa.write(localAddress);             // add sender address
@@ -208,7 +206,7 @@ void sendMessage(int level){
 
 void onReceive(int packetSize) {
   if (packetSize == 0) return;          // if there's no packet, return
- Serial.print("packetSize");
+  Serial.print("packetSize");
   Serial.println(packetSize);
   // read packet header bytes:
   int recipient = LoRa.read();          // recipient address

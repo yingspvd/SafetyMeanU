@@ -37,7 +37,7 @@ char auth[] = BLYNK_AUTH_TOKEN;     // Auth Token provied by Blynk app
 const char SSID[] = "yingspvd";     // Wifi name 
 const char PASSWORD[] = "88888888"; // Wifi password 
 
-#define LINE_TOKEN  "ggz1RSjek5Im3FhfEADeloxbyms837PgNyG9oAcQ4Md"
+#define LINE_TOKEN  "oqcae9Hg3ZAryK8x6nPmGozyxSqSM9GVucwrfVJmouW"
 
 //define the pins used by the LoRa transceiver module
 #define SCK 5
@@ -63,6 +63,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 
 //Data
 String LoRaData;
+String location;
 String ID;
 String ac;
 String force;
@@ -84,6 +85,7 @@ void setup() {
   Serial.println(WiFi.localIP());  
 
   LINE.setToken(LINE_TOKEN);
+  LINE.notifyPicture("https://photos.app.goo.gl/nkW5CN8Ld67oeutRA");
   LINE.notifySticker("Let's Start",11538,51626494);
 
   
@@ -148,7 +150,8 @@ void readData(){
     while (LoRa.available()) {
       incoming += (char)LoRa.read();
     }
-
+Serial.println(incomingLength);
+Serial.println(incoming.length());
     if (incomingLength != incoming.length()) {   // check length for error
     Serial.println("error: message length does not match length");
     return;                             // skip rest of function
@@ -161,24 +164,27 @@ void readData(){
     }
     
     // if message is for this device, or broadcast, print details:
-    int pos1 = incoming.indexOf('/');
-    int pos2 = incoming.indexOf('&');
-    int pos3 = incoming.indexOf('-');
+    int pos0 = incoming.indexOf('>');
+    int pos1 = incoming.indexOf('*');
+    int pos2 = incoming.indexOf('<');
+    int pos3 = incoming.indexOf('@');
 
-    ID = incoming.substring(0, pos1);
+    ID = incoming.substring(0, pos0);
+    location = incoming.substring(pos0+1, pos1);
     ac = incoming.substring(pos1+1, pos2);
     force = incoming.substring(pos2+1, pos3);
     level = incoming.substring(pos3+1, incoming.length());
 
     String message = "ID: " + ID;
-    String messageLine = "ID: " + ID + " Level" + level;
+    String messageLine =  "\nID: " + ID  + "\nLevel: " + level + "\nLocation: " + location;
     Serial.println("Received from: 0x" + String(sender, HEX));
     Serial.println("Sent to: 0x" + String(recipient, HEX));
     Serial.println("ID: " + ID);   
+    Serial.println("Location: " + location);   
     Serial.println("Accelration: "+ac);   
     Serial.println("Force: " + force); 
     Serial.println("Level: " + level); 
-    Blynk.logEvent("level1"+ message);
+    Blynk.logEvent("level2"+ message);
     LINE.notify(messageLine);
     
     Blynk.virtualWrite(V0,ID);
