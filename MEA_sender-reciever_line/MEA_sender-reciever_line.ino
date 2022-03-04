@@ -3,6 +3,7 @@
  *  Safety MEA(n) U Project
  *  Created by Supavadee Phusanam
 ************************************/
+#include <TridentTD_LineNotify.h>
 
 //Libraries for LoRa
 #include <SPI.h>
@@ -33,8 +34,8 @@ Adafruit_MPU6050 mpu;
 
 // Config
 char auth[] = BLYNK_AUTH_TOKEN;       // Auth Token provied by Blynk app
-const char ssid[] = "yingspvd";       //  Wifi name
-const char password[] = "88888888";   //  wifi password 
+const char SSID[] = "yingspvd";       //  Wifi name
+const char PASSWORD[] = "88888888";   //  wifi password 
 
 BlynkTimer timer;
 
@@ -58,12 +59,15 @@ BlynkTimer timer;
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
 
+#define LINE_TOKEN  "oqcae9Hg3ZAryK8x6nPmGozyxSqSM9GVucwrfVJmouW"
+
 /*LoRa send Data*/
 String outgoing;              // outgoing message
-int ID = 1111;                // count of outgoing messages
+int ID = 4444;                // count of outgoing messages
+String ID_text = "4444";
 String location = "https://www.google.com/maps?q=%E0%B8%AD%E0%B8%A1%E0%B8%B2%E0%B8%A3%E0%B8%B5+%E0%B8%9B%E0%B8%A3%E0%B8%B0%E0%B8%95%E0%B8%B9%E0%B8%99%E0%B9%89%E0%B8%B3&um=1&ie=UTF-8&sa=X&ved=2ahUKEwjO0_Cnrpv2AhUi73MBHVuVB7QQ_AUoAXoECAIQAw";
 byte msgCount = 0;            // count of outgoing messages
-byte localAddress = 00000002;     // address of this device 
+byte localAddress = 00000003;     // address of this device 
 byte destination = 00000004;      // destination to send to
 
 double acx = 0;
@@ -80,8 +84,20 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RST);
 void setup() {
   //initialize Serial Monitor
   Serial.begin(115200);
-  Blynk.begin(auth, ssid, password);
+  Blynk.begin(auth, SSID, PASSWORD);
   resetValue();
+
+  WiFi.begin(SSID, PASSWORD);
+  Serial.printf("WiFi connecting to %s\n",  SSID);
+  while(WiFi.status() != WL_CONNECTED){ 
+    Serial.print("."); 
+    delay(400); 
+  }
+  Serial.printf("\nWiFi connected\nIP : ");
+  Serial.println(WiFi.localIP());  
+
+  LINE.setToken(LINE_TOKEN);
+  LINE.notify("\nID: " + ID_text +" Start!");
   
   //reset OLED display via software
   pinMode(OLED_RST, OUTPUT);
@@ -171,11 +187,11 @@ void loop() {
   display.setCursor(0,0);
 
   /*If Crash*/
-  if(ac >= 25){
-    sendMessage(2);
+  if(ac >= 30){
+    sendMessage(2,ac,force);
   }
-  else if(ac >= 15 && ac < 25){
-    sendMessage(1);
+  else if(ac >= 15 && ac < 30){
+    sendMessage(1,ac,force);
   }
   else{
     display.print("Not Crash");
@@ -186,9 +202,9 @@ void loop() {
   onReceive(LoRa.parsePacket());
 }
 
-void sendMessage(int level){
+void sendMessage(int level,double ac_crash,double force_crash){
     String outgoing = "";         // send a message
-    outgoing = String(ID) + ">" + location + "*" + String(ac_max) + "<" + String(force_max)+ "@" + String(level);
+    outgoing = String(ID) + ">" + location + "*" + String(ac_crash) + "<" + String(force_crash)+ "@" + String(level);
     LoRa.beginPacket();                   // start packet
     LoRa.write(destination);              // add destination address
     LoRa.write(localAddress);             // add sender address

@@ -85,8 +85,7 @@ void setup() {
   Serial.println(WiFi.localIP());  
 
   LINE.setToken(LINE_TOKEN);
-  LINE.notifyPicture("https://photos.app.goo.gl/nkW5CN8Ld67oeutRA");
-  LINE.notifySticker("Let's Start",11538,51626494);
+  LINE.notify("\nRECEIVER2 Start!");
 
   
   //reset OLED display via software
@@ -150,8 +149,8 @@ void readData(){
     while (LoRa.available()) {
       incoming += (char)LoRa.read();
     }
-Serial.println(incomingLength);
-Serial.println(incoming.length());
+     Serial.println(incomingLength);
+    Serial.println(incoming.length());
     if (incomingLength != incoming.length()) {   // check length for error
     Serial.println("error: message length does not match length");
     return;                             // skip rest of function
@@ -175,7 +174,7 @@ Serial.println(incoming.length());
     force = incoming.substring(pos2+1, pos3);
     level = incoming.substring(pos3+1, incoming.length());
 
-    String message = "ID: " + ID;
+    String message = "\nID: " + ID + "\nLocation: " + location;
     String messageLine =  "\nID: " + ID  + "\nLevel: " + level + "\nLocation: " + location;
     Serial.println("Received from: 0x" + String(sender, HEX));
     Serial.println("Sent to: 0x" + String(recipient, HEX));
@@ -184,7 +183,14 @@ Serial.println(incoming.length());
     Serial.println("Accelration: "+ac);   
     Serial.println("Force: " + force); 
     Serial.println("Level: " + level); 
-    Blynk.logEvent("level2"+ message);
+
+    if(level == "1"){
+      Serial.println("1"); 
+    }
+    else{
+      Serial.println("2"); 
+    }
+    
     LINE.notify(messageLine);
     
     Blynk.virtualWrite(V0,ID);
